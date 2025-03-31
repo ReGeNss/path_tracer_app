@@ -9,7 +9,9 @@ class HttpService {
     try {
       final response = await client.get(Uri.parse(url));
       if (response.statusCode == 200) {
-        return Task.listFromJson(jsonDecode(response.body) as List<dynamic>);
+        final decodetData = jsonDecode(response.body);
+        if(decodetData['error'] == true) throw Exception('Error: ${decodetData['message']}');
+        return Task.listFromJson(decodetData['data']);
       } else {
         throw Exception('Failed to load data');
       }

@@ -27,7 +27,7 @@ class MainScreenBodyWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    textFieldController.text = 'https://flutter.webspark.dev/'; 
+    textFieldController.text = 'https://flutter.webspark.dev/flutter/api'; 
     final model = context.read<MainScreenModel>();
     return Padding(
       padding: const EdgeInsets.all(15.0),
@@ -55,8 +55,8 @@ class MainScreenBodyWidget extends StatelessWidget {
 }
 
 class InputFieldWidget extends StatelessWidget {
-  const InputFieldWidget({super.key, this.textFieldController});
-  final textFieldController; 
+  const InputFieldWidget({super.key, required this.textFieldController});
+  final TextEditingController textFieldController; 
 
   @override
   Widget build(BuildContext context) {

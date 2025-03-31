@@ -6,7 +6,8 @@ part 'task.g.dart';
 @JsonSerializable(createToJson: false, explicitToJson: true)
 class Task{
   final String id;
-  final List<String> field;
+  @JsonKey(fromJson: _fieldToLists)
+  final List<List<bool>> field;
   final Coordinates start;
   final Coordinates end;
 
@@ -16,5 +17,9 @@ class Task{
 
   static List<Task> listFromJson(List<dynamic> json) {
     return json.map((e) => Task.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  static List<List<bool>> _fieldToLists(List<dynamic> rows){
+    return rows.map((row) => (row as String).split('').map((char) => char == '.').toList()).toList();
   }
 }
