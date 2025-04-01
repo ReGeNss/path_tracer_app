@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:path_tracer_app/routes.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MainApp());
 }
 

@@ -14,7 +14,7 @@ class Coordinates{
   Map<String, dynamic> toJson() => _$CoordinatesToJson(this);
 
   @override 
-  String toString() => '($x, $y)';
+  String toString() => '($x,$y)';
 
   @override
   bool operator ==(Object other) {

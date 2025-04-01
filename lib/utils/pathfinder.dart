@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:collection/collection.dart';
 import 'package:path_tracer_app/entities.dart/index.dart';
+import 'grid.dart';
 
 List<List<int>> directions = [
   [-1, -1], [0, -1], [1, -1],
@@ -18,7 +19,7 @@ class Pathfinder {
     generateNodes();
   }
 
-  List<Coordinates> findPath(Coordinates start, Coordinates end) {
+  List<Coordinates> findPath(Coordinates start, Coordinates end){
     final startNode = nodes[start.y][start.x];
     startNode.gCost = 0;
     startNode.hCost = calcHCost(startNode, end);
@@ -31,6 +32,7 @@ class Pathfinder {
     openSet.add(startNode);
 
     while(openSet.isNotEmpty){
+      // await Future.delayed(Duration(milliseconds: 10 ), () {print('work');});
       final currentNode = openSet.removeFirst();
       closedSet.add(currentNode.coordinates);
 
@@ -44,7 +46,7 @@ class Pathfinder {
           x: currentNode.coordinates.x + direction[0],
           y: currentNode.coordinates.y + direction[1],
         );
-        if(newCoordinates.x < 0 || newCoordinates.x >= nodes.length || newCoordinates.y < 0 || newCoordinates.y >= nodes.length) {
+        if(newCoordinates.x < 0 || newCoordinates.x >= nodes[0].length || newCoordinates.y < 0 || newCoordinates.y >= nodes.length) {
           continue;
         }
         final neighbor = nodes[newCoordinates.y][newCoordinates.x];
@@ -66,11 +68,11 @@ class Pathfinder {
   }
   
   void generateNodes () {
-    for (int i = 0; i < grid.grid.length; i++) {
+    for (int i = 0; i < grid.matrix.length; i++) {
       nodes.add([]);
-      for (var cell in grid.grid[i]) {
+      for (var cell in grid.matrix[i]) {
         nodes[i].add(Node(
-          coordinates: Coordinates(x: cell.x, y: cell.y),
+          coordinates: Coordinates(x: cell.coordinates.x, y: cell.coordinates.y),
           parent: null,
           hCost: cell.isAvailable ? 0 : double.infinity)
         );
@@ -79,7 +81,7 @@ class Pathfinder {
   }
 
   void changeProgress(int openSetLength, int closedSetLength) {
-    emitProgressEvent((openSetLength + closedSetLength / (grid.grid.length * grid.grid.length) * 100).toInt());
+    emitProgressEvent(((openSetLength + closedSetLength) / (grid.matrix.length * grid.matrix[0].length) * 100).floor());
   }
 
   double calcHCost(Node node, Coordinates end) {
@@ -108,35 +110,4 @@ class Node{
 
   Node({required this.coordinates, required this.parent, this.gCost = double.infinity, this.hCost = 0});
   double get fCost => gCost + hCost;
-}
-
-class Grid{
-  List<List<Cell>> grid = [];
-
-  Grid._(this.grid);
-
-  factory Grid.generateFromMatrix(List<List<bool>> matrix) {
-    final List<List<Cell>> grid = [];
-    for(int i =0; i < matrix.length; i++){
-      grid.add([]);
-      for(int j = 0; j < matrix[i].length; j++){
-        grid[i].add(Cell(x: j, y: i, isAvailable: matrix[i][j]));
-      }
-    }
-    return Grid._(grid);
-  }
-
-}
-
-class Cell{
-  final int x;
-  final int y;
-  final bool isAvailable;
-
-  Cell({required this.x, required this.y, this.isAvailable = true});
-
-  @override
-  String toString() {
-    return 'Cell(x: $x, y: $y $isAvailable)';
-  }
 }

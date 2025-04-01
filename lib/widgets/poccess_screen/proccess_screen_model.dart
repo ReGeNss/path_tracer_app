@@ -1,52 +1,73 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:path_tracer_app/utils/progress_counter.dart';
 import '../../entities.dart/index.dart';
-import '../../pathfinder.dart';
+import '../../utils/grid.dart';
+import '../../utils/pathfinder.dart';
 import '../../services/http_service.dart';
 
-const _loadedTaskProgress = 50;
 
 class ProccessScreenModel extends ChangeNotifier{
   final String url;
   final _httpService = HttpService();
-  List<Task> _tasks = [];
+  final ProgressCounter _progressCounter = ProgressCounter();
+  final List<TaskResult> results = [];
   String? error; 
+  bool _isProccessed = false;
+  bool? get isLoadingSuccess{
+    if(error != null) return false;
+    if(_isProccessed) return true;
+    return null;
+  }
 
-  final streamController = StreamController<int>.broadcast();
-  Stream<int> get progressStream => streamController.stream;
+  Stream<int>? get progressStream => _progressCounter.progressStream;
 
   ProccessScreenModel(this.url){
     proccessTasks();
   }
 
   Future<void> proccessTasks() async{
-    streamController.add(0);
-    await loadTasks();
-    streamController.add(_loadedTaskProgress);
-    _tasks.add(Task(id: '1', 
-      field: [
-        [true, true, true],
-        [true, false, true],
-        [true, false, true]
-      ],
-     start: Coordinates(x: 0, y: 2), end: Coordinates(x: 2, y: 2)));
-    final grid = Grid.generateFromMatrix(_tasks[0].field,);
-    final pathfinder = Pathfinder(grid: grid, emitProgressEvent: setFindingProgress);
-    final path = pathfinder.findPath(_tasks[0].start, _tasks[0].end);
-    streamController.add(100);
+    _progressCounter.addOperations([0.5]); 
+    _progressCounter.setProgress(0);
+    final tasks = await loadTasks();
+    _progressCounter.setProgress(100);
+    _progressCounter.addOperations(List.filled(tasks.length, 1/tasks.length));
+    _progressCounter.nextOperation();
+    for (final task in tasks){
+      final grid = Grid.generateFromMatrix(task.field);
+      final pathfinder = Pathfinder(
+        grid: grid,
+        emitProgressEvent: _progressCounter.setProgress,
+      );
+      final path = pathfinder.findPath(task.start, task.end);
+      final result = ProcessedTaskPath(id: task.id, result: Result(path, path.map((task) => task.toString()).toList().join('->') ));
+      results.add(TaskResult(grid, result, task.start, task.end));
+      _progressCounter.nextOperation();
+    }
+    _isProccessed = true;
+    _progressCounter.dispose(); 
+    notifyListeners();
   }
 
-  void setFindingProgress(int progress) {
-    streamController.add(50 + progress ~/ 2);
-  }
-
-  Future<void> loadTasks() async {
+  Future<List<Task>> loadTasks() async {
     try{
-      _tasks = await _httpService.getTasks(url);
+      return await _httpService.getTasks(url);
     }catch(e){
       error = e.toString();
-      print('Error loading tasks: $e');
+      notifyListeners();
+      return [];
     }
+  }
+
+  Future<List<TaskStatus>> sendResults() async{
+    _isProccessed = false; 
     notifyListeners();
+    final response = await _httpService.sendResults(url, results.map((e) => e.processedTaskPath).toList());
+    for(final taskStatus in response){
+      if(!taskStatus.correct) throw Exception();
+    }
+    _isProccessed = true;
+    return response;
   }
 }

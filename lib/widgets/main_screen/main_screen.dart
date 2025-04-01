@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:path_tracer_app/routes.dart';
+import 'package:path_tracer_app/styles.dart';
 import 'package:path_tracer_app/widgets/main_screen/main_screen_model.dart';
 import 'package:provider/provider.dart';
 
@@ -8,9 +9,14 @@ class MainScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
+    return Provider(
       create: (_) => MainScreenModel(),
       child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Home', style: standardTextStyle,),
+          centerTitle: true,
+          backgroundColor: Colors.blue,
+        ),
         body: MainScreenBodyWidget()
       ),
     );
@@ -30,7 +36,7 @@ class MainScreenBodyWidget extends StatelessWidget {
     textFieldController.text = 'https://flutter.webspark.dev/flutter/api'; 
     final model = context.read<MainScreenModel>();
     return Padding(
-      padding: const EdgeInsets.all(15.0),
+      padding: standartPadding,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -43,7 +49,6 @@ class MainScreenBodyWidget extends StatelessWidget {
                 );
                 return;
               }
-              model.setApiBaseUrl(textFieldController.text);
               Navigator.pushNamed(context, MainRoutes.proccessScreen, arguments: textFieldController.text);
             }, 
             child: Text('Start counting prossess')
@@ -62,12 +67,11 @@ class InputFieldWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        const Text('Enter valid API base URL',),
+          Text('Enter valid API base URL', style: standardTextStyle.copyWith(fontSize: 16),),
           TextField(
             controller: textFieldController,
             decoration: InputDecoration(
               border: OutlineInputBorder(),
-              labelText: 'API Base URL',
             ),
         ),
       ],
