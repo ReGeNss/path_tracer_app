@@ -8,7 +8,7 @@ class Coordinates{
   final int x;
   final int y;
 
-  Coordinates({required this.x, required this.y});
+  Coordinates(this.x, this.y);
 
   factory Coordinates.fromJson(Map<String, dynamic> json) => _$CoordinatesFromJson(json);
   Map<String, dynamic> toJson() => _$CoordinatesToJson(this);
@@ -22,6 +22,10 @@ class Coordinates{
     if (other is! Coordinates) return false;
     return x == other.x && y == other.y;
   }
+
+  operator +(Coordinates other) => Coordinates(x + other.x, y + other.y);
+
+  operator -(Coordinates other) => Coordinates(x - other.x, y - other.y);
   
   @override
   int get hashCode => x.hashCode ^ y.hashCode;

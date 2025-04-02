@@ -45,41 +45,37 @@ class ProccessScreenBody extends StatelessWidget {
         child: Column(
           children: [
             Expanded(
-              child: model.isLoadingSuccess == null
-                ? const ProccessingBar()
-                : model.isLoadingSuccess == false
-                    ? Text(
-                      'Something went wrong\n${model.error}',
-                      style: standardTextStyle, 
-                      textAlign: TextAlign.center,
-                    )
-                    : const Text(
-                      'Tasks proccessed successfully',
-                      style: standardTextStyle,
-                      textAlign: TextAlign.center,
-                    ),
-            ),
-            AbsorbPointer(
-              absorbing: model.isLoadingSuccess != true,
-              child: FilledButton(
-                onPressed: () {
-                  model.sendResults().then(
-                    (value) => Navigator.pushNamed(context, MainRoutes.resultListScreen, arguments: model.results)
-                  ).catchError(
-                    (error) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error: $error')),
-                      );
-                      return false;
-                    }
-                  );
-                  
-                },
-                child: Text('Send result', style: standardTextStyle.copyWith(
-                  color: Colors.white,
-                )),
+              child: Column(
+                spacing: 20,
+                children: [
+                  Text(
+                    model.message ?? '',
+                    style: standardTextStyle,
+                    textAlign: TextAlign.center,
+                  ),
+                  model.isLoading ? ProccessingBar() : SizedBox(),
+                ],
               ),
             ),
+            !model.isLoading
+              ? FilledButton(
+                onPressed: () async {
+                  if(model.error && model.results.isNotEmpty || !model.error && model.isResultsSended){
+                    Navigator.pushNamed(context, MainRoutes.resultListScreen, arguments: model.results);
+                    return;
+                  }
+                  if(!model.isResultsSended) {
+                    await model.sendResults();
+                    if(model.isResultsSended){
+                      Navigator.pushNamed(context, MainRoutes.resultListScreen, arguments: model.results);
+                    }
+                  }
+                },
+                child: Text(!model.isResultsSended ? 'Send result' : 'View results', style: standardTextStyle.copyWith(
+                  color: Colors.white,
+                )),
+              )
+              : SizedBox()
           ]
         ),
       ),
@@ -97,10 +93,6 @@ class ProccessingBar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       spacing: 20,
       children: [
-        Text('Proccessing...', style: standardTextStyle.copyWith(
-          fontSize: 30,
-          fontWeight: FontWeight.bold,
-        )),
         const CircularProgressIndicator(
           constraints: BoxConstraints(
             minWidth: 50,

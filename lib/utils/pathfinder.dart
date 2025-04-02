@@ -3,11 +3,13 @@ import 'package:collection/collection.dart';
 import 'package:path_tracer_app/entities.dart/index.dart';
 import 'grid.dart';
 
-List<List<int>> directions = [
-  [-1, -1], [0, -1], [1, -1],
-  [-1, 0],         [1, 0],
-  [-1,1], [0, 1], [1, 1]
+List<Coordinates> _directions = [
+  Coordinates(-1, -1), Coordinates(0, -1), Coordinates(1, -1),
+  Coordinates(-1, 0),               Coordinates(1, 0),
+  Coordinates(-1, 1),  Coordinates(0, 1), Coordinates(1, 1)
 ];
+
+const _sidesSumToDiagonalMove = 2; 
 
 class Pathfinder {
   final Grid grid;
@@ -19,50 +21,50 @@ class Pathfinder {
     generateNodes();
   }
 
-  List<Coordinates> findPath(Coordinates start, Coordinates end){
+  Future<List<Coordinates>> findPath(Coordinates start, Coordinates end) async{
     final startNode = nodes[start.y][start.x];
-    startNode.gCost = 0;
-    startNode.hCost = calcHCost(startNode, end);
+    startNode.startToNodeCost = 0;
+    startNode.nodeToEndCost = calcHodeToEndCost(startNode, end);
     
     final endNode = nodes[end.y][end.x];
     
-    final openSet = PriorityQueue<Node>((a, b) => a.fCost.compareTo(b.fCost));
-    final closedSet = <Coordinates>{};
+    final toCheckNodesSet = PriorityQueue<Node>((a, b) => a.fCost.compareTo(b.fCost));
+    final checkedNodesSet = <Coordinates>{};
 
-    openSet.add(startNode);
+    toCheckNodesSet.add(startNode);
 
-    while(openSet.isNotEmpty){
-      // await Future.delayed(Duration(milliseconds: 10 ), () {print('work');});
-      final currentNode = openSet.removeFirst();
-      closedSet.add(currentNode.coordinates);
+    while(toCheckNodesSet.isNotEmpty){
+      final currentNode = toCheckNodesSet.removeFirst();
+      checkedNodesSet.add(currentNode.coordinates);
 
       if(currentNode.coordinates == endNode.coordinates){
-        changeProgress(openSet.length, closedSet.length);
+        changeProgress(toCheckNodesSet.length, checkedNodesSet.length);
         return _reconstructPath(currentNode);
       }
 
-      for (var direction in directions) {
-        final newCoordinates = Coordinates(
-          x: currentNode.coordinates.x + direction[0],
-          y: currentNode.coordinates.y + direction[1],
-        );
-        if(newCoordinates.x < 0 || newCoordinates.x >= nodes[0].length || newCoordinates.y < 0 || newCoordinates.y >= nodes.length) {
+      for (var direction in _directions) {
+        final newCoordinates = currentNode.coordinates + direction;
+        if (newCoordinates.x < 0 ||
+            newCoordinates.x >= nodes[0].length ||
+            newCoordinates.y < 0 ||
+            newCoordinates.y >= nodes.length) {
           continue;
         }
         final neighbor = nodes[newCoordinates.y][newCoordinates.x];
-        if(closedSet.contains(neighbor.coordinates)) continue;
-        double tentativeG = currentNode.gCost + (direction[0].abs() + direction[1].abs() == 2 ? sqrt2 : 1);
-        if(tentativeG < neighbor.gCost){
+        if(checkedNodesSet.contains(neighbor.coordinates)) continue;
+        double startToNeigthborConst = 
+          currentNode.startToNodeCost + (direction.x.abs() + direction.y.abs() == _sidesSumToDiagonalMove ? sqrt2 : 1);
+        if(startToNeigthborConst < neighbor.startToNodeCost){
           neighbor.parent = currentNode;
-          neighbor.gCost = tentativeG;
-          neighbor.hCost+= calcHCost(neighbor, endNode.coordinates);
-           if (!openSet.contains(neighbor)) {
-            openSet.add(neighbor);
-            changeProgress(openSet.length, closedSet.length);
+          neighbor.startToNodeCost = startToNeigthborConst;
+          neighbor.nodeToEndCost+= calcHodeToEndCost(neighbor, endNode.coordinates);
+           if (!toCheckNodesSet.contains(neighbor)) {
+            toCheckNodesSet.add(neighbor);
+            changeProgress(toCheckNodesSet.length, checkedNodesSet.length);
           }
         }
       }
-      changeProgress(openSet.length, closedSet.length);
+      changeProgress(toCheckNodesSet.length, checkedNodesSet.length);
     }
     return []; 
   }
@@ -72,9 +74,9 @@ class Pathfinder {
       nodes.add([]);
       for (var cell in grid.matrix[i]) {
         nodes[i].add(Node(
-          coordinates: Coordinates(x: cell.coordinates.x, y: cell.coordinates.y),
+          coordinates: Coordinates(cell.coordinates.x, cell.coordinates.y),
           parent: null,
-          hCost: cell.isAvailable ? 0 : double.infinity)
+          nodeToEndCost: cell.isAvailable ? 0 : double.infinity)
         );
       }
     }
@@ -84,10 +86,9 @@ class Pathfinder {
     emitProgressEvent(((openSetLength + closedSetLength) / (grid.matrix.length * grid.matrix[0].length) * 100).floor());
   }
 
-  double calcHCost(Node node, Coordinates end) {
-    final dx = (node.coordinates.x - end.x).abs();
-    final dy = (node.coordinates.y - end.y).abs();
-    return sqrt(dx * dx + dy * dy);
+  double calcHodeToEndCost(Node node, Coordinates end) {
+    final distance = node.coordinates - end;
+    return sqrt(distance.x * distance.x + distance.y * distance.y);
   }
 
   List<Coordinates> _reconstructPath(Node lastNode) {
@@ -105,9 +106,9 @@ class Pathfinder {
 class Node{
   final Coordinates coordinates;
   Node? parent;
-  double gCost;
-  double hCost;
+  double startToNodeCost;
+  double nodeToEndCost;
 
-  Node({required this.coordinates, required this.parent, this.gCost = double.infinity, this.hCost = 0});
-  double get fCost => gCost + hCost;
+  Node({required this.coordinates, required this.parent, this.startToNodeCost = double.infinity, this.nodeToEndCost = 0});
+  double get fCost => startToNodeCost + nodeToEndCost;
 }

@@ -15,25 +15,46 @@ class ResultListScreen extends StatelessWidget {
         title: const Text('Results list', style: standardTextStyle),
         centerTitle: true,
       ),
-      body: ListView.separated(
-        itemCount: results.length,
-        separatorBuilder: (context, index) => const Divider(),
-        itemBuilder: (context, index) {
-          return ListTile(
-            titleAlignment: ListTileTitleAlignment.center,
-            title: Text(
-              results[index].processedTaskPath.result.path,
-              style: standardTextStyle
-            ),
-            onTap: () {
-              Navigator.pushNamed(
-                context,
-                MainRoutes.previewScreen,
-                arguments: results[index],
-              );
-            },
-          );
-        },
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: ListView.separated(
+          itemCount: results.length,
+          separatorBuilder: (context, index) => const Divider(),
+          itemBuilder: (context, index) {
+            Color? tileColor;
+            if (results[index].correct == true) {
+              tileColor = Colors.green;
+            } else if (results[index].correct == false) {
+              tileColor = Colors.red;
+            } else {
+              tileColor = null;
+            }
+            return ListTile(
+              titleAlignment: ListTileTitleAlignment.center,
+              title: Text(
+                results[index].processedTaskPath.result.path,
+                style: standardTextStyle
+              ),
+              subtitle: Text(
+                "id: ${results[index].processedTaskPath.id}",
+                style: standardTextStyle.copyWith(
+                  fontSize: 12,
+                ),
+              ),
+              shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.all(Radius.circular(10)),
+              ),
+              tileColor: tileColor,
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  MainRoutes.previewScreen,
+                  arguments: results[index],
+                );
+              },
+            );
+          },
+        ),
       )
     );
   }

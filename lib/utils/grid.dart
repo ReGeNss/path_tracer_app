@@ -12,7 +12,7 @@ class Grid{
     for(int i = 0; i < matrix.length; i++){
       grid.add([]);
       for(int j = 0; j < matrix[i].length; j++){
-        grid[i].add(Cell(coordinates: Coordinates(x: j, y: i), isAvailable: matrix[i][j]));
+        grid[i].add(Cell(coordinates: Coordinates(j, i), isAvailable: matrix[i][j]));
       }
     }
     return Grid._(grid);

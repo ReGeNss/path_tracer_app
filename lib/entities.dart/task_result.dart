@@ -6,6 +6,7 @@ class TaskResult{
   final ProcessedTaskPath processedTaskPath; 
   final Coordinates start; 
   final Coordinates end;
+  bool? correct; 
 
-  TaskResult(this.grid, this.processedTaskPath, this.start, this.end);
+  TaskResult(this.grid, this.processedTaskPath, this.start, this.end, this.correct);
 }
